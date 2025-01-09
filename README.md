@@ -1,1 +1,1 @@
-# Projeto-Dedu-o-Natural
+# Projeto-Dedução Natural
