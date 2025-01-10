@@ -1,5 +1,4 @@
 name: DeployToVPS
-
 on:
   push:
     branches:
