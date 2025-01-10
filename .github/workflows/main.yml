@@ -11,11 +11,34 @@ jobs:
     steps:
       - name: Repo checkout
         uses: actions/checkout@v4
-        
-      - name: Deploy to vps
+
+      - name: Deploy to VPS
         uses: easingthemes/ssh-deploy@main
         env:
-          SSH_PRIVATE_KEY: ${{secrets.SERVER_SSH_KEY}} #chave privada ssh atrelada a uma chave publica que está autorizada no arquivo authorized_keys da pasta .ssh do caminho /home/usuario/.ssh
-          REMOTE_HOST: ${{secrets.REMOTE_HOST}} #ip da máquina
-          REMOTE_USER: ${{secrets.REMOTE_USER}} #nome do usuario da maquina, por exemplo, em davi@pc, o user seria davi
-          TARGET: ${{secrets.REMOTE_TARGET}} #pasta em que vão ficar os arquivos do repo
+          SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }} # Chave privada SSH
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }} # IP da máquina
+          REMOTE_USER: ${{ secrets.REMOTE_USER }} # Nome do usuário da máquina
+          TARGET: ${{ secrets.REMOTE_TARGET }} # Pasta em que vão ficar os arquivos do repositório
+        with:
+          pre-deploy: |
+            # Adiciona a variável GOOGLE_API_KEY ao /etc/environment (para todos os usuários)
+            echo "GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}" | sudo tee -a /etc/environment > /dev/null
+
+            # Verifica se a variável foi adicionada corretamente
+            if ! grep -q "GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}" /etc/environment; then
+              echo "Erro: GOOGLE_API_KEY não foi adicionada ao /etc/environment."
+              exit 1
+            fi
+
+            echo "Variável GOOGLE_API_KEY adicionada com sucesso ao /etc/environment."
+
+          post-deploy: |
+            # Navega até a pasta de destino
+            cd ${{ secrets.REMOTE_TARGET }}
+
+            # Instala dependências do projeto (se necessário)
+            if [ -f requirements.txt ]; then
+              pip install -r requirements.txt
+            fi
+
+            echo "Deploy concluído com sucesso!"
